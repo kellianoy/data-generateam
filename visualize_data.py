@@ -3,15 +3,14 @@ from data.dataset_tools import generate_basic_timeseries_splitted_normalized_dat
 import torch
 import numpy as np
 
-model_type = "simple_gan"
-
+model_type = "nice"
 model_name = "model_1"
 
 if model_type == "simple_gan":
     from models.simple_gan import Model
     from models.simple_gan import Trainer
     model = Model()
-    trainer = Trainer( model)
+    trainer = Trainer(model)
     model_path = "parameters/simple_gan/{}.pt".format(model_name)
 
 if model_type == "nice":
