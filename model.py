@@ -5,7 +5,7 @@
 # !! *DO NOT MODIFY THE NAME OF THE FUNCTION* !!
 #
 # You can store your parameters in any format you want (npy, h5, json, yaml, ...)
-# <!> *SAVE YOUR PARAMETERS IN THE parameters/ DICRECTORY* <!>
+# <!> *SAVE YOUR PARAMETERS IN THE parameters/ DIRECTORY* <!>
 #
 # See below an example of a generative model
 # G_\theta(Z) = np.max(0, \theta.Z)
@@ -13,6 +13,8 @@
 
 import numpy as np
 import os
+import torch
+from models.nice import NICE
 
 # <!> DO NOT ADD ANY OTHER ARGUMENTS <!>
 def generative_model(noise):
@@ -30,9 +32,14 @@ def generative_model(noise):
 
     # load my parameters (of dimension 15 in this example). 
     # <!> be sure that they are stored in the parameters/ directory <!>
-    parameters = np.load(os.path.join("parameters", "example_params.npy"))
-
-    return np.maximum(0, latent_variable @ parameters)
+    model = NICE()
+    model.load_state_dict(torch.load("./parameters/nice/model_1.pt"))
+    model.eval()
+    # generate the output of the generative model
+    output = model(latent_variable)
+    
+    # return the output of the generative model
+    return output 
 
 
 
