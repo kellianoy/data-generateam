@@ -38,7 +38,6 @@ def generative_model(noise):
             mid_dim=15, 
             hidden=4, 
             mask_config=1)
-    model = NICE()
     model.load_state_dict(torch.load("./parameters/nice/model_1.pt"))
     model.eval()
     # generate the output of the generative model
