@@ -14,8 +14,8 @@
 import numpy as np
 import os
 import torch
-from models.nice import NICE
-from models.nice.utils import Trainer
+from parameters.nice import NICE
+from parameters.nice.utils import Trainer
 
 # <!> DO NOT ADD ANY OTHER ARGUMENTS <!>
 
