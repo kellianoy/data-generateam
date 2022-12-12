@@ -32,6 +32,12 @@ def generative_model(noise):
 
     # load my parameters (of dimension 15 in this example). 
     # <!> be sure that they are stored in the parameters/ directory <!>
+    model = NICE(prior=latent_variable, 
+            coupling=4, 
+            len_input=15, 
+            mid_dim=15, 
+            hidden=4, 
+            mask_config=1)
     model = NICE()
     model.load_state_dict(torch.load("./parameters/nice/model_1.pt"))
     model.eval()
