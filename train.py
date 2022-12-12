@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def compute_anderson_darling( generated_sample, real_sample):
+def compute_anderson_darling(generated_sample, real_sample):
     n_station = real_sample.shape[1]
     anderson_darling = []
     for station in range(n_station):
@@ -47,10 +47,7 @@ def compute_error_on_test( temperature_test, time, trainer):
     anderson_darling_metrics = compute_anderson_darling( generated_sample, temperature_test)
     return anderson_darling_metrics
 
-
-
 def main(args):
-
     dataset_name = args.dataset_name
     proportion_test = args.proportion_test
     model_type = args.model_type
@@ -159,7 +156,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generating temperature models')
 
     parser.add_argument('--dataset_name', "--string", default="df_train" ,type=str)
-    parser.add_argument('--proportion_test', default=0.8, type=float, help='peroportion testin dataset')
+    parser.add_argument('--proportion_test', default=0.8, type=float, help='proportion test in dataset')
     parser.add_argument('--batch_size', default=64, type=int, help='Batch size')
     parser.add_argument('--lr', default=1e-4, type=float, help='Learning rate')
     parser.add_argument('--num_epochs', default=1000, type=int, help='Number of epochs to train')
