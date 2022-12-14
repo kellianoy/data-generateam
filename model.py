@@ -29,28 +29,23 @@ def generative_model(noise):
     noise : ndarray with shape (n_samples, n_dim)
         input noise of the generative model
     """
-    # See below an example
-    # ---------------------
+    # Input dimension
     len_dim = 10
-    # use the first 10 dimensions of the noise in this example
+    # Use the first 10 dimensions of the noise in this example
     latent_variable = noise[:, :len_dim]
-    # load my parameters (of dimension 15 in this example).
-    # <!> be sure that they are stored in the parameters/ directory <!>
+    # Load the model and the parameters
     model = NICE(prior=torch.distributions.Normal(torch.tensor(0.), torch.tensor(1.)),
                  coupling=4,
                  len_input=len_dim,
                  mid_dim=10,
                  hidden=4,
                  mask_config=1.)
+    # Use the trainer class to load the parameters
     trainer = Trainer(model)
     model_trained = trainer.load_model("parameters/nice/model_1.pt")
-    # model_trained = trainer.load_model("./parameters/nice/model_1.pt")
     model_trained.eval()
-    # generate the output of the generative model
-    output = latent_variable.copy()
-    for i in range(latent_variable.shape[0]):
-        for j in range(latent_variable.shape[1]):
-            output[i][j] = np.mean(model_trained.g(
-                latent_variable[i][j]).cpu().detach().numpy())
-    # return the output of the generative model
+    # Convert the numpy array to a torch tensor
+    latent_variable = torch.from_numpy(latent_variable).float()
+    # Generate the output
+    output = model_trained.g(latent_variable).cpu().detach().numpy()
     return output

@@ -1,1 +1,1 @@
-2022-12-12 13:45:25,616:DEBUG: __init__() missing 6 required positional arguments: 'prior', 'coupling', 'len_input', 'mid_dim', 'hidden', and 'mask_config'
+2022-12-14 18:41:10,084:DEBUG: Successful simulation
