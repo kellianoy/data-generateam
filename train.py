@@ -167,6 +167,6 @@ if __name__ == '__main__':
                         help='Resume from checkpoint')
     parser.add_argument('--model_type', default="nice", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
-    parser.add_argument('--model_loss', default="ad", type=str)
+    parser.add_argument('--model_loss', default="ke", type=str)
 
     main(parser.parse_args())
