@@ -4,64 +4,25 @@ from data.dataset_pytorch import Dataset
 import torch
 from torch.utils.data import DataLoader
 from tqdm import trange
-from scipy.stats import anderson_ksamp
 import copy
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
-
-
-def compute_anderson_darling(generated_sample, real_sample):
-    n_station = real_sample.shape[1]
-    anderson_darling = []
-    for station in range(n_station):
-        anderson_darling.append(anderson_ksamp(
-            [generated_sample[:, station], real_sample[:, station]])[0])
-    anderson_darling = np.array(anderson_darling)
-    return np.mean(anderson_darling)
-
-
-def compute_absolute_kendall_error(generated_sample, real_sample, n_test):
-    R = []
-    R_hat = []
-    for i in range(n_test):
-        R_i = 0
-        R_i_hat = 0
-        for j in range(n_test):
-            if (real_sample[j] < real_sample[i]).all():
-                R_i += 1
-            if (generated_sample[j] < generated_sample[i]).all():
-                R_i_hat += 1
-        R.append(R_i/(n_test-1))
-        R_hat.append(R_i_hat/(n_test-1))
-    R = np.sort(np.array(R.sort()), axis=0)
-    R_hat = np.sort(np.array(R_hat.sort()), axis=0)
-
-    return np.linalg.norm((R-R_hat), ord=1)
-
-
-def compute_error_on_test(temperature_test, time, trainer):
-
-    n_test = time.shape[0]
-    time_interval = [time[0], time[-1]]
-    generated_sample = trainer.generate_sample(n_test, time_interval)
-
-    anderson_darling_metrics = compute_anderson_darling(
-        generated_sample, temperature_test)
-
-    return anderson_darling_metrics
+from metrics import Metrics
 
 
 def main(args):
+    # Parse arguments
     dataset_name = args.dataset_name
     proportion_test = args.proportion_test
     model_type = args.model_type
+    model_name = args.model_name
+    model_loss = args.model_loss
     num_epochs = args.num_epochs
     batch_size = args.batch_size
     lr = args.lr
-    model_name = args.model_name
 
+    # Load dataset and generate training and testing set (normalized)
     dataset = generate_basic_timeseries_splitted_normalized_dataset(
         dataset_name, proportion_test=proportion_test)
     training_set = dataset[0][0]
@@ -69,8 +30,7 @@ def main(args):
     max_temperature = dataset[1]
     min_temperature = dataset[2]
 
-    model_type = args.model_type
-
+    # Selecting the model
     if model_type == "simple_gan":
         from parameters.simple_gan import Model
         from parameters.simple_gan import Trainer
@@ -91,7 +51,6 @@ def main(args):
         mid_dim = 10
         hidden = 4
         mask_config = 1.
-
         model = NICE(prior=noise_input,
                      coupling=coupling,
                      len_input=len_input_output,
@@ -99,7 +58,6 @@ def main(args):
                      hidden=hidden,
                      mask_config=mask_config)
         trainer = Trainer(model, lr)
-
         model_path = "parameters/nice/"
         model_name = "{}.pt".format(model_name)
 
@@ -108,6 +66,8 @@ def main(args):
 
     print("")
     print("Data preparation...")
+
+    # Preparating the data: dividing in training and testing sets
     temperature_training_set = torch.from_numpy(training_set[0]).float()
     time_training_set = torch.from_numpy(training_set[1]).float()
     temperature_testing_set = testing_set[0]
@@ -117,26 +77,29 @@ def main(args):
 
     train_loader = DataLoader(torch_training, batch_size=batch_size,
                               shuffle=True, num_workers=0)
-    testing_error = []
 
     print("Training...")
     print("")
 
+    # Metrics initialization
     model_trained = []
+    testing_error = []
+    metrics = Metrics(trainer)
 
+    # Training loop
     for epoch in (pbar := trange(num_epochs)):
         for temperature, time in train_loader:
             trainer.training_iteration(temperature, time)
 
-        testing_error.append(compute_error_on_test(
-            temperature_testing_set, time_testing_set, trainer))
+        testing_error.append(metrics.compute_error_on_test(
+            temperature_testing_set, time_testing_set, mode=model_loss))
 
         model_trained.append(copy.deepcopy(trainer.model_to_save()))
 
         pbar.set_description(f"Error on testing set: {testing_error[-1]}")
 
+    # Collecting the best model
     testing_error = np.array(testing_error)
-
     best_metrics = np.min(testing_error)
     optimal_epoch = np.argmin(testing_error)
 
@@ -145,6 +108,7 @@ def main(args):
         best_metrics, optimal_epoch))
     print("")
 
+    # Saving the model
     optimal_model = model_trained[optimal_epoch]
 
     isExist = os.path.exists(model_path)
@@ -157,6 +121,7 @@ def main(args):
     print("Model saved at : {}".format(model_path))
     print("")
 
+    # Plotting the error
     plt.plot(testing_error)
     plt.show()
 
@@ -178,5 +143,6 @@ if __name__ == '__main__':
                         help='Resume from checkpoint')
     parser.add_argument('--model_type', default="nice", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
+    parser.add_argument('--model_loss', default="ad", type=str)
 
     main(parser.parse_args())
