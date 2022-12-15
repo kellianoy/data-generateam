@@ -134,13 +134,13 @@ if __name__ == '__main__':
                         type=float, help='proportion test in dataset')
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
-    parser.add_argument('--lr', default=1e-4, type=float, help='Learning rate')
+    parser.add_argument('--lr', default=1e-3, type=float, help='Learning rate')
     parser.add_argument('--num_epochs', default=1000,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
     parser.add_argument('--model_type', default="nice", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
-    parser.add_argument('--model_loss', default="ad", type=str)
+    parser.add_argument('--model_loss', default="ke", type=str)
 
     main(parser.parse_args())

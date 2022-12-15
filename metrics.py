@@ -5,6 +5,9 @@ import numpy as np
 class Metrics:
     # Class constructor
     def __init__(self, trainer, mode):
+        # @param trainer: the trainer object
+        # @param mode: the metric to use
+
         self.trainer = trainer
         self.mode = mode
 
@@ -14,13 +17,11 @@ class Metrics:
         # @param generated_sample: the generated sample
         # @param real_sample: the real sample
 
-        # Number of stations
         n_station = real_sample.shape[1]
-        anderson_darling = []
+        anderson_darling = np.zeros(n_station)
         for station in range(n_station):
-            anderson_darling.append(anderson_ksamp(
-                [generated_sample[:, station], real_sample[:, station]])[0])
-        anderson_darling = np.array(anderson_darling)
+            anderson_darling[station] = anderson_ksamp(
+                [generated_sample[:, station], real_sample[:, station]])[0]
         return np.mean(anderson_darling)
 
     def absolute_kendall_error(self, generated_sample, real_sample):
@@ -28,7 +29,6 @@ class Metrics:
         # @param generated_sample: the generated sample
         # @param real_sample: the real sample
 
-        # Number of samples
         n_test = real_sample.shape[0]
         # COmpute the ones of the real sample
         R = (1/(n_test-1))*np.sum(real_sample[:, None] < real_sample, axis=1)
