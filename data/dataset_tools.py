@@ -87,10 +87,10 @@ def rescale_time(time, initial_time = 1981.6657534246576, final_time = 2017):
 def normalize_temperature(temperature):
     max = np.max(temperature)
     min = np.min(temperature)
-    return (temperature-min)/(max-min), max, min
+    return (temperature-min)/(max-min)-1/2, max, min
 
 def denormalize_temperature(temperature_normalized, max, min):
-    return temperature_normalized*(max-min) + min
+    return (temperature_normalized+1/2)*(max-min) + min
 
 def generate_basic_timeseries_splitted_normalized_dataset(name, proportion_test = 0.8, rescale = True):
 

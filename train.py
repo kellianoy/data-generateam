@@ -20,6 +20,20 @@ def compute_anderson_darling( generated_sample, real_sample):
     anderson_darling = np.array(anderson_darling)
     return np.mean(anderson_darling)
 
+# def compute_anderson_darling(predictions, data):
+#     N,P = data.shape
+#     ADdistance = 0
+#     for station in range(P) :
+#         temp_predictions = predictions[:,station].reshape(-1)
+#         temp_data = data[:,station].reshape(-1)
+#         sorted_array = np.sort(temp_predictions)
+#         count = np.zeros(len(temp_data))
+#         count = (1/(N+2)) * np.array([(temp_data < order).sum()+1 for order in sorted_array])
+#         idx = np.arange(1, N+1)
+#         ADdistance = (2*idx - 1)* (np.log(count) + np.log(1-count[::-1]))
+#         ADdistance = - N - np.sum(ADdistance)/N
+#     return ADdistance/P
+
 def compute_absolute_kendall_error( generated_sample, real_sample, n_test):
     R = []
     R_hat = []
@@ -68,27 +82,26 @@ def main(args):
     model_type = args.model_type
 
     if model_type == "simple_gan":
-        from models.simple_gan import Model
-        from models.simple_gan import Trainer
+        from parameters.simple_gan import Model
+        from parameters.simple_gan import Trainer
 
         model = Model(len_input = 10)
         trainer = Trainer( model, lr)
         trainer.weights_init_uniform_rule(model)
-        model_path = "parameters/simple_gan/"
+        model_path = "parameters/simple_gan/models_saved/"
         model_name = "{}.pt".format(model_name)
 
-    if model_type == "nice":
-        from models.nice import NICE
-        from models.nice import Trainer
+    elif model_type == "nice":
+        from parameters.nice import NICE
+        from parameters.nice import Trainer
+        sigma = 0.1
         noise_input = torch.distributions.Normal(
             torch.tensor(0.), torch.tensor(1.))
-
         coupling = 4
         len_input_output = 10
         mid_dim = 10
         hidden = 4
-        mask_config = 1.
-
+        mask_config = 1
         model = NICE(prior=noise_input, 
                 coupling=coupling, 
                 len_input=len_input_output, 
@@ -97,12 +110,36 @@ def main(args):
                 mask_config=mask_config)
         trainer = Trainer( model, lr)
 
-        model_path = "parameters/nice/"
+        model_path = "parameters/nice/models_saved/"
+        model_name = "{}.pt".format(model_name)
+
+    elif model_type == "nice_conditional":
+        from parameters.nice_conditional import NICE_CONDITIONAL
+        from parameters.nice_conditional import Trainer
+        sigma = 0.1
+        noise_input = torch.distributions.Normal(
+            torch.tensor(0.), torch.tensor(1.))
+        coupling = 4
+        len_input_output = 10
+        mid_dim = 10
+        # hidden = 4
+        hidden = 4
+        mask_config = 1
+        model = NICE_CONDITIONAL(prior=noise_input, 
+                coupling=coupling, 
+                len_input=len_input_output, 
+                mid_dim=mid_dim, 
+                hidden=hidden, 
+                mask_config=mask_config)
+        trainer = Trainer( model, lr)
+
+        model_path = "parameters/nice_conditional/models_saved/"
         model_name = "{}.pt".format(model_name)
 
     else:
         raise NotImplementedError
-
+        
+    print("ok")
     print("")
     print("Data preparation...")
     temperature_training_set = torch.from_numpy(training_set[0]).float()
@@ -115,6 +152,7 @@ def main(args):
     train_loader = DataLoader(torch_training, batch_size=batch_size,
                                     shuffle=True, num_workers=0)
     testing_error = []
+    error_on_train_set= []
 
     print("Training...")
     print("")
@@ -126,10 +164,11 @@ def main(args):
             trainer.training_iteration(temperature, time)
 
         testing_error.append( compute_error_on_test(temperature_testing_set, time_testing_set, trainer) )
+        error_on_train_set.append( compute_error_on_test(training_set[0], training_set[1], trainer) )
 
         model_trained.append(copy.deepcopy( trainer.model_to_save() ))
 
-        pbar.set_description(f"Error on testing set: {testing_error[-1]}")
+        pbar.set_description(f"Error on testing set: {testing_error[-1]}, on training set: {error_on_train_set[-1]}")
 
     testing_error = np.array(testing_error)
 
@@ -151,7 +190,9 @@ def main(args):
     print("Model saved at : {}".format(model_path))
     print("")
 
+    plt.plot(error_on_train_set)
     plt.plot(testing_error)
+    plt.legend(["Error on training set", "Error on testing set"])
     plt.show()
 
 
@@ -161,10 +202,10 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_name', "--string", default="df_train" ,type=str)
     parser.add_argument('--proportion_test', default=0.8, type=float, help='peroportion testin dataset')
     parser.add_argument('--batch_size', default=64, type=int, help='Batch size')
-    parser.add_argument('--lr', default=1e-4, type=float, help='Learning rate')
-    parser.add_argument('--num_epochs', default=1000, type=int, help='Number of epochs to train')
+    parser.add_argument('--lr', default=1e-3, type=float, help='Learning rate')
+    parser.add_argument('--num_epochs', default=2, type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true', help='Resume from checkpoint')
-    parser.add_argument('--model_type', default="nice" ,type=str)
+    parser.add_argument('--model_type', default="nice_conditional" ,type=str)
     parser.add_argument('--model_name', default="model_1" ,type=str)
 
     main(parser.parse_args())

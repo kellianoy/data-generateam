@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from models.nice import NICE
+from parameters.glow import Glow
 
 class Trainer():
     def __init__(self, model, lr=0.1):
@@ -9,15 +9,15 @@ class Trainer():
         self.model = model
 
     def training_iteration(self, temperature, time):
-        self.optimizer.zero_grad()
-        loss = -self.model(temperature).mean()
-        loss.backward()
-        self.optimizer.step()
+        raise NotImplementedError
+        return loss
 
     def generate_sample(self, n_sample, time_interval):
         noise = torch.empty(( n_sample, self.model.len_input)).normal_(mean=0,std=1)
+        time = torch.FloatTensor(n_sample).uniform_(time_interval[0], time_interval[1])
+
         with torch.no_grad():
-            return self.model.g(noise).cpu().detach().numpy()
+            return self.model.g(noise,time).cpu().detach().numpy()
     
     def model_to_save(self):
         return self.model

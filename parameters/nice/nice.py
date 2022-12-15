@@ -143,7 +143,14 @@ class NICE(nn.Module):
             log-likelihood of input.
         """
         z, log_det_J = self.f(x)
+        ####
+        # torch.pi = torch.acos(torch.zeros(1)).item() * 2
+        # time_mean = torch.stack([time for i in range(0,self.len_input)], dim=1)
+        # prob_posteriori = torch.exp(-torch.square(z - time_mean)/( 2*(self.prior)**2 ) )/(2*torch.pi*self.prior)
+        # log_prob_posteriori = torch.log( prob_posteriori )
+        ####
         log_ll = torch.sum(self.prior.log_prob(z), dim=1)
+        # log_ll = torch.sum(log_prob_posteriori,dim = 1)
         return log_ll + log_det_J
 
     def sample(self, size):

@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from models.simple_gan import Generator, Model
+from parameters.simple_gan import Generator, Model
 import numpy as np
 
 
@@ -37,7 +37,7 @@ class Trainer():
         self.model.discriminator.train()
         self.model.generator.eval()
 
-        noise = torch.empty((batch_size,self.model.len_input_noise)).normal_(mean=0,std=1)
+        noise = torch.empty((batch_size,self.model.len_input)).normal_(mean=0,std=1)
         input = torch.cat([noise,time.unsqueeze(1)],axis = -1)
         sample_generated = self.model.generator(input)
 
