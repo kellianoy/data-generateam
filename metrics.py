@@ -23,7 +23,7 @@ class Metrics:
             anderson_darling[station] = anderson_ksamp(
                 [generated_sample[:, station], real_sample[:, station]])[0]
         return np.mean(anderson_darling)
-    
+
 #   def compute_anderson_darling(predictions, data):
 #     N,P = data.shape
 #     ADdistance = 0
@@ -44,7 +44,7 @@ class Metrics:
         # @param real_sample: the real sample
 
         n_test = real_sample.shape[0]
-        # COmpute the ones of the real sample
+        # Compute the ones of the real sample
         R = (1/(n_test-1))*np.sum(real_sample[:, None] < real_sample, axis=1)
         # Compute the ones of the generated sample
         R_tild = (1/(n_test-1)) * \
@@ -52,9 +52,9 @@ class Metrics:
         # Return the linear norm of the difference (absolute error)
         return np.linalg.norm((R-R_tild), ord=1)
 
-    def compute_error_on_test(self, temperature_test, time):
+    def compute_error_on_test(self, temperature, time):
         # Compute the error on the test set using the chosen metric
-        # @param temperature_test: the test set
+        # @param temperature: the test set
         # @param time: the time vector
         # @param mode: the metric to use
 
@@ -65,11 +65,11 @@ class Metrics:
 
         if self.mode == "ad":
             metric = self.anderson_darling(
-                generated_sample, temperature_test)
+                generated_sample, temperature)
 
         elif self.mode == "ke":
             metric = self.absolute_kendall_error(
-                generated_sample, temperature_test)
+                generated_sample, temperature)
 
         else:
             raise NotImplementedError
