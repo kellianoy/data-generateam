@@ -22,13 +22,13 @@ def main(args):
     batch_size = args.batch_size
     lr = args.lr
 
-    # Load dataset and generat training and testing set (normalized)
+    # Load dataset and generate training and testing set (normalized)
     dataset = generate_basic_timeseries_splitted_normalized_dataset(
         dataset_name, proportion_test=proportion_test)
     training_set = dataset[0][0]
     testing_set = dataset[0][1]
-    max_temperature = dataset[1]
-    min_temperature = dataset[2]
+    validation_set = generate_basic_timeseries_splitted_normalized_dataset(
+        dataset_name, proportion_test=1)[0][0]
 
     # Selecting the model
     if model_type == "simple_gan":
@@ -69,7 +69,6 @@ def main(args):
         coupling = 4
         len_input_output = 10
         mid_dim = 10
-        # hidden = 4
         hidden = 4
         mask_config = 1
         model = NICE_CONDITIONAL(prior=noise_input,
@@ -138,7 +137,8 @@ def main(args):
     # Metrics initialization
     model_trained = []
     testing_error = []
-    error_on_train_set = []
+    training_error = []
+    validation_error = []
     metrics = Metrics(trainer, model_loss)
 
     # Training loop
@@ -190,9 +190,11 @@ def main(args):
     print("")
 
     # Plotting the error
-    plt.plot(error_on_train_set)
+    plt.plot(training_error)
     plt.plot(testing_error)
-    plt.legend(["Error on training set", "Error on testing set"])
+    plt.plot(validation_error)
+    plt.legend(["Error on training set", "Error on testing set",
+               "Error on validation set"])
     plt.show()
 
 
@@ -213,6 +215,6 @@ if __name__ == '__main__':
                         help='Resume from checkpoint')
     parser.add_argument('--model_type', default="nice_ts", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
-    parser.add_argument('--model_loss', default="ke", type=str)
+    parser.add_argument('--model_loss', default="ad", type=str)
 
     main(parser.parse_args())

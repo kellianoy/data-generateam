@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from data.dataset_tools import generate_basic_timeseries_splitted_normalized_dataset
 import torch
 import numpy as np
+from metrics import Metrics
 
 if __name__ == "__main__":
 
@@ -41,7 +42,6 @@ if __name__ == "__main__":
     testing_set = dataset[0][1]
     max_temperature = dataset[1]
     min_temperature = dataset[2]
-
     model_trained = trainer.load_model(model_path)
 
     time = training_set[1]
@@ -50,9 +50,11 @@ if __name__ == "__main__":
     n_test = 10000
 
     generated_sample = trainer.generate_sample(n_test, time_interval)
-    print(generated_sample.shape)
 
-    fig, axs = plt.subplots(nrows=10, ncols=2, figsize=(10, 30))
+    validation_dataset = generate_basic_timeseries_splitted_normalized_dataset(
+        "df_test", proportion_test=1)[0][0]
+
+    fig, axs = plt.subplots(nrows=6, ncols=3, figsize=(10, 30))
     fig.subplots_adjust(hspace=.5, wspace=0.5)
 
     axs = axs.ravel()
