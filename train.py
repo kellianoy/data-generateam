@@ -84,7 +84,7 @@ def main(args):
     # Metrics initialization
     model_trained = []
     testing_error = []
-    metrics = Metrics(trainer)
+    metrics = Metrics(trainer, model_loss)
 
     # Training loop
     for epoch in (pbar := trange(num_epochs)):
@@ -92,10 +92,8 @@ def main(args):
             trainer.training_iteration(temperature, time)
 
         testing_error.append(metrics.compute_error_on_test(
-            temperature_testing_set, time_testing_set, mode=model_loss))
-
+            temperature_testing_set, time_testing_set))
         model_trained.append(copy.deepcopy(trainer.model_to_save()))
-
         pbar.set_description(f"Error on testing set: {testing_error[-1]}")
 
     # Collecting the best model
