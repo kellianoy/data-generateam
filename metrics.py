@@ -22,6 +22,20 @@ class Metrics:
                 [generated_sample[:, station], real_sample[:, station]])[0])
         anderson_darling = np.array(anderson_darling)
         return np.mean(anderson_darling)
+    
+#   def compute_anderson_darling(predictions, data):
+#     N,P = data.shape
+#     ADdistance = 0
+#     for station in range(P) :
+#         temp_predictions = predictions[:,station].reshape(-1)
+#         temp_data = data[:,station].reshape(-1)
+#         sorted_array = np.sort(temp_predictions)
+#         count = np.zeros(len(temp_data))
+#         count = (1/(N+2)) * np.array([(temp_data < order).sum()+1 for order in sorted_array])
+#         idx = np.arange(1, N+1)
+#         ADdistance = (2*idx - 1)* (np.log(count) + np.log(1-count[::-1]))
+#         ADdistance = - N - np.sum(ADdistance)/N
+#     return ADdistance/P
 
     def absolute_kendall_error(self, generated_sample, real_sample):
         # Compute the kendall's dependance function
