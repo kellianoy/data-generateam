@@ -32,7 +32,6 @@ if model_type == "nice":
                  hidden=hidden,
                  mask_config=mask_config)
 
-
 dataset = generate_basic_timeseries_splitted_normalized_dataset(
     "df_train", proportion_test=1.)
 training_set = dataset[0][0]
