@@ -21,10 +21,9 @@ def simulate(noise):
     noise : ndarray
         input of the generative model
     """
-
     try:
         output = generative_model(noise)
-        message = "Successful simulation" 
+        message = "Successful simulation"
         assert output.shape == (noise.shape[0], 10), "Shape error, it must be (n_data, 10). Please verify the shape of the output."
         
         # write the output
