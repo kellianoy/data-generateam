@@ -1,3 +1,4 @@
+from metrics import Metrics
 import argparse
 from data.dataset_tools import generate_basic_timeseries_splitted_normalized_dataset, denormalize_temperature
 from data.dataset_pytorch import Dataset
@@ -8,7 +9,6 @@ import copy
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-from metrics import Metrics
 
 
 def main(args):
@@ -27,8 +27,8 @@ def main(args):
         dataset_name, proportion_test=proportion_test)
     training_set = dataset[0][0]
     testing_set = dataset[0][1]
-    max_temperature = dataset[1]
-    min_temperature = dataset[2]
+    validation_set = generate_basic_timeseries_splitted_normalized_dataset(
+        dataset_name, proportion_test=1)[0][0]
 
     # Selecting the model
     if model_type == "simple_gan":
@@ -38,10 +38,8 @@ def main(args):
         model = Model(len_input=10)
         trainer = Trainer(model, lr)
         trainer.weights_init_uniform_rule(model)
-        model_path = "parameters/simple_gan/"
-        model_name = "{}.pt".format(model_name)
 
-    if model_type == "nice":
+    elif model_type == "nice":
         from parameters.nice import NICE
         from parameters.nice import Trainer
         noise_input = torch.distributions.Normal(
@@ -50,7 +48,7 @@ def main(args):
         len_input_output = 10
         mid_dim = 10
         hidden = 4
-        mask_config = 1.
+        mask_config = 1
         model = NICE(prior=noise_input,
                      coupling=coupling,
                      len_input=len_input_output,
@@ -58,22 +56,39 @@ def main(args):
                      hidden=hidden,
                      mask_config=mask_config)
         trainer = Trainer(model, lr)
-        model_path = "parameters/nice/"
-        model_name = "{}.pt".format(model_name)
+
+    elif model_type == "nice_conditional":
+        from parameters.nice_conditional import NICE_CONDITIONAL
+        from parameters.nice_conditional import Trainer
+        sigma = 0.1
+        noise_input = torch.distributions.Normal(
+            torch.tensor(0.), torch.tensor(1.))
+        coupling = 4
+        len_input_output = 10
+        mid_dim = 10
+        hidden = 4
+        mask_config = 1
+        model = NICE_CONDITIONAL(prior=noise_input,
+                                 coupling=coupling,
+                                 len_input=len_input_output,
+                                 mid_dim=mid_dim,
+                                 hidden=hidden,
+                                 mask_config=mask_config)
+        trainer = Trainer(model, lr)
 
     else:
         raise NotImplementedError
 
+    print("ok")
     print("")
     print("Data preparation...")
 
-    # Preparating the data: dividing in training and testing sets
-    temperature_training_set = torch.from_numpy(training_set[0]).float()
-    time_training_set = torch.from_numpy(training_set[1]).float()
-    temperature_testing_set = testing_set[0]
-    time_testing_set = testing_set[1]
+    model_path = "parameters/{}/models_saved/".format(model_type)
+    model_name = model_name + ".pt"
 
-    torch_training = Dataset(temperature_training_set, time_training_set)
+    # Setting the training parameters with both the data and the time series
+    torch_training = Dataset(torch.from_numpy(
+        training_set[0]).float(), torch.from_numpy(training_set[1]).float())
 
     train_loader = DataLoader(torch_training, batch_size=batch_size,
                               shuffle=True, num_workers=0)
@@ -84,6 +99,8 @@ def main(args):
     # Metrics initialization
     model_trained = []
     testing_error = []
+    training_error = []
+    validation_error = []
     metrics = Metrics(trainer, model_loss)
 
     # Training loop
@@ -92,9 +109,15 @@ def main(args):
             trainer.training_iteration(temperature, time)
 
         testing_error.append(metrics.compute_error_on_test(
-            temperature_testing_set, time_testing_set))
+            testing_set[0], testing_set[1]))
+        training_error.append(metrics.compute_error_on_test(
+            training_set[0], training_set[1]))
+        validation_error.append(metrics.compute_error_on_test(
+            validation_set[0], validation_set[1]))
+
         model_trained.append(copy.deepcopy(trainer.model_to_save()))
-        pbar.set_description(f"Error on testing set: {testing_error[-1]}")
+        pbar.set_description(
+            f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}, on validation set: {validation_error[-1]}")
 
     # Collecting the best model
     testing_error = np.array(testing_error)
@@ -120,7 +143,11 @@ def main(args):
     print("")
 
     # Plotting the error
+    plt.plot(training_error)
     plt.plot(testing_error)
+    plt.plot(validation_error)
+    plt.legend(["Error on training set", "Error on testing set",
+               "Error on validation set"])
     plt.show()
 
 
@@ -135,7 +162,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
     parser.add_argument('--lr', default=1e-3, type=float, help='Learning rate')
-    parser.add_argument('--num_epochs', default=1000,
+    parser.add_argument('--num_epochs', default=5000,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
