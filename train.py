@@ -17,7 +17,7 @@ def main(args):
     proportion_test = args.proportion_test
     model_type = args.model_type
     model_name = args.model_name
-    model_loss = args.model_loss
+    model_metrics = args.model_metrics
     num_epochs = args.num_epochs
     batch_size = args.batch_size
     lr = args.lr
@@ -139,7 +139,7 @@ def main(args):
     testing_error = []
     training_error = []
     validation_error = []
-    metrics = Metrics(trainer, model_loss)
+    metrics = Metrics(trainer, model_metrics)
 
     # Training loop
     for epoch in (pbar := trange(num_epochs)):
@@ -193,8 +193,9 @@ def main(args):
     plt.plot(training_error)
     plt.plot(testing_error)
     plt.plot(validation_error)
-    plt.legend(["Error on training set", "Error on testing set",
-               "Error on validation set"])
+    mode = "Kendall" if model_metrics=="ke" else "Anderson Darling"
+    plt.legend([f"{mode} Error on training set", f"{mode} Error on testing set",
+               f"{mode} Error on validation set"])
     plt.show()
 
 
@@ -215,6 +216,6 @@ if __name__ == '__main__':
                         help='Resume from checkpoint')
     parser.add_argument('--model_type', default="nice_ts", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
-    parser.add_argument('--model_loss', default="ad", type=str)
+    parser.add_argument('--model_metrics', default="ke", type=str)
 
     main(parser.parse_args())

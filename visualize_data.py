@@ -51,10 +51,7 @@ if __name__ == "__main__":
 
     generated_sample = trainer.generate_sample(n_test, time_interval)
 
-    validation_dataset = generate_basic_timeseries_splitted_normalized_dataset(
-        "df_test", proportion_test=1)[0][0]
-
-    fig, axs = plt.subplots(nrows=6, ncols=3, figsize=(10, 30))
+    fig, axs = plt.subplots(nrows=10, ncols=2, figsize=(10, 30))
     fig.subplots_adjust(hspace=.5, wspace=0.5)
 
     axs = axs.ravel()
