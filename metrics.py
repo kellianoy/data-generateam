@@ -38,18 +38,19 @@ class Metrics:
 #         ADdistance = - N - np.sum(ADdistance)/N
 #     return ADdistance/P
 
-    def absolute_kendall_error(self, generated_sample, real_sample):
+    def absolute_kendall_error(self, generated_samples, real_samples):
         # Compute the kendall's dependance function
-        # @param generated_sample: the generated sample
-        # @param real_sample: the real sample
-
-        n_test = real_sample.shape[0]
-        # Compute the ones of the real sample
-        R = (1/(n_test-1))*np.sum(real_sample[:, None] < real_sample, axis=1)
-        # Compute the ones of the generated sample
-        R_tild = (1/(n_test-1)) * \
-            np.sum(generated_sample[:, None] < generated_sample, axis=1)
-        # Return the linear norm of the difference (absolute error)
+        # @param generated_samples: the generated sample
+        # @param real_samples: the real sample
+        n_test = real_samples.shape[0]
+        R_i = np.zeros((n_test, n_test))
+        R_i_tild = np.zeros((n_test, n_test))
+        for j in range(n_test):
+            # R_i is the sum of the rows that are smaller than the ith row
+            R_i[j] = (real_samples[j] < real_samples).all(axis=1)
+            R_i_tild[j] = (generated_samples[j] < generated_samples).all(axis=1)
+        R = np.sort(1/(n_test-1) * np.sum(R_i, axis=0))
+        R_tild = np.sort(1/(n_test-1)* np.sum(R_i_tild, axis=0))
         return np.linalg.norm((R-R_tild), ord=1)
 
     def compute_error_on_test(self, temperature_test, time, time_series, past_infos = None,number_ts = None):
