@@ -75,17 +75,12 @@ if __name__ == '__main__':
 
     generated_sample = trainer.generate_sample(n_test, time_interval)
 
-    validation_dataset = generate_basic_timeseries_splitted_normalized_dataset(
-        "df_test", proportion_test=1)[0][0]
-
-    fig, axs = plt.subplots(nrows=6, ncols=3, figsize=(10, 30))
+    fig, axs = plt.subplots(nrows=10, ncols=2, figsize=(10, 30))
     fig.subplots_adjust(hspace=.5, wspace=0.5)
 
-    for i in range(6):
+    for i in range(10):
         axs[i][0].hist(testing_set[0][:, i], bins=30)
         axs[i][0].axis(xmin=-0.5, xmax=0.5)
         axs[i][1].hist(generated_sample[:, i], bins=30)
         axs[i][1].axis(xmin=-0.5, xmax=0.5)
-        axs[i][2].hist(validation_dataset[0][:, i], bins=30)
-        axs[i][2].axis(xmin=-0.5, xmax=0.5)
     plt.show()
