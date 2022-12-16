@@ -112,13 +112,14 @@ def main(args):
             testing_set[0], testing_set[1]))
         training_error.append(metrics.compute_error_on_test(
             training_set[0], training_set[1]))
-        validation_error.append(metrics.compute_error_on_test(
-            validation_set[0], validation_set[1]))
+        # validation_error.append(metrics.compute_error_on_test(
+        #     validation_set[0], validation_set[1]))
 
         model_trained.append(copy.deepcopy(trainer.model_to_save()))
+        # pbar.set_description(
+        #     f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}, on validation set: {validation_error[-1]}")
         pbar.set_description(
-            f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}, on validation set: {validation_error[-1]}")
-
+            f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}")
     # Collecting the best model
     testing_error = np.array(testing_error)
     best_metrics = np.min(testing_error)
@@ -163,7 +164,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
     parser.add_argument('--lr', default=1e-3, type=float, help='Learning rate')
-    parser.add_argument('--num_epochs', default=200,
+    parser.add_argument('--num_epochs', default=250,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
