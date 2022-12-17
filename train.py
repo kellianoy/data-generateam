@@ -27,8 +27,6 @@ def main(args):
         dataset_name, proportion_test=proportion_test)
     training_set = dataset[0][0]
     testing_set = dataset[0][1]
-    validation_set = generate_basic_timeseries_splitted_normalized_dataset(
-        dataset_name, proportion_test=1)[0][0]
 
     # Selecting the model
     if model_type == "simple_gan":
@@ -192,7 +190,6 @@ def main(args):
     # Plotting the error
     plt.plot(training_error)
     plt.plot(testing_error)
-    plt.plot(validation_error)
     
     mode = ""
     if model_metrics == "ad":
@@ -202,8 +199,7 @@ def main(args):
     else:
         mode = "Mix AD/KE"
     
-    plt.legend([f"{mode} Error on training set", f"{mode} Error on testing set",
-               f"{mode} Error on validation set"])
+    plt.legend([f"{mode} Error on training set", f"{mode} Error on testing set"])
     plt.show()
 
 
@@ -222,7 +218,7 @@ if __name__ == '__main__':
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
-    parser.add_argument('--model_type', default="nice_conditional", type=str)
+    parser.add_argument('--model_type', default="nice_ts", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
     parser.add_argument('--model_metrics', default="mix", type=str)
 

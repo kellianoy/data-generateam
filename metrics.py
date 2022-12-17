@@ -56,7 +56,7 @@ class Metrics:
         # @param real_samples: the real sample
         return ake(generated_samples, real_samples)
 
-    def compute_error_on_test(self, temperature_test, time, time_series, past_infos = None,number_ts = None):
+    def compute_error_on_test(self, temperature, time, time_series, past_infos = None,number_ts = None):
         # Compute the error on the test set using the chosen metric
         # @param temperature: the test set
         # @param time: the time vector
@@ -65,9 +65,9 @@ class Metrics:
         n_test = time.shape[0]
         time_interval = [time[0], time[-1]]
         if time_series:
-            generated_sample = self.trainer.generate_sample(n_test, temperature_test[0], time, past_infos ,number_ts)
+            generated_samples = self.trainer.generate_sample(n_test, temperature[0], time, past_infos, number_ts)
         else:
-            generated_sample = self.trainer.generate_sample(n_test, time_interval)
+            generated_samples = self.trainer.generate_sample(n_test, time_interval)
         metric = None
 
         if self.mode == "ad":

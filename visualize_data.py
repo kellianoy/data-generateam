@@ -35,7 +35,7 @@ if __name__ == "__main__":
                      mask_config=mask_config)
         trainer = Trainer(model)
 
-    model_path = "parameters/{}/{}.pt".format(model_type, model_name)
+    model_path = "parameters/{}/models_saved/{}.pt".format(model_type, model_name)
     dataset = generate_basic_timeseries_splitted_normalized_dataset(
         "df_train", proportion_test=1.)
     training_set = dataset[0][0]
@@ -53,16 +53,7 @@ if __name__ == "__main__":
 
     fig, axs = plt.subplots(nrows=10, ncols=2, figsize=(10, 30))
     fig.subplots_adjust(hspace=.5, wspace=0.5)
-
-    axs = axs.ravel()
-
-    for i in range(10):
-        axs[2*i].hist(training_set[0][:, i])
-        axs[2*i+1].hist(generated_sample[:, i], bins=30)
-        axs[2*i+1].axis(xmin=0., xmax=1.)
-
-    plt.show()
-
+    
     axs = axs.ravel()
 
     for i in range(10):
