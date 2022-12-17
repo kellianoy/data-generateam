@@ -72,11 +72,14 @@ class Metrics:
 
         if self.mode == "ad":
             metric = self.anderson_darling(
-                generated_sample, temperature)
+                generated_samples, temperature)
 
         elif self.mode == "ke":
             metric = self.absolute_kendall_error(
-                generated_sample, temperature)
+                generated_samples, temperature)
+        
+        elif self.mode == "mix":
+            metric = 0.5 * self.anderson_darling(generated_samples, temperature) + 0.5 * self.absolute_kendall_error(generated_samples, temperature)
 
         else:
             raise NotImplementedError

@@ -193,7 +193,15 @@ def main(args):
     plt.plot(training_error)
     plt.plot(testing_error)
     plt.plot(validation_error)
-    mode = "Kendall" if model_metrics=="ke" else "Anderson Darling"
+    
+    mode = ""
+    if model_metrics == "ad":
+        mode = "Anderson Darling"
+    elif model_metrics == "ke":
+        mode = "Absolute Kendall"
+    else:
+        mode = "Mix AD/KE"
+    
     plt.legend([f"{mode} Error on training set", f"{mode} Error on testing set",
                f"{mode} Error on validation set"])
     plt.show()
@@ -209,13 +217,13 @@ if __name__ == '__main__':
                         type=float, help='proportion test in dataset')
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
-    parser.add_argument('--lr', default=3e-5, type=float, help='Learning rate')
-    parser.add_argument('--num_epochs', default=250,
+    parser.add_argument('--lr', default=1e-3, type=float, help='Learning rate')
+    parser.add_argument('--num_epochs', default=256,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
-    parser.add_argument('--model_type', default="nice_ts", type=str)
+    parser.add_argument('--model_type', default="nice_conditional", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
-    parser.add_argument('--model_metrics', default="ke", type=str)
+    parser.add_argument('--model_metrics', default="mix", type=str)
 
     main(parser.parse_args())
