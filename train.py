@@ -28,6 +28,8 @@ def main(args):
     training_set = dataset[0][0]
     testing_set = dataset[0][1]
 
+    time_series = False
+
     # Selecting the model
     if model_type == "simple_gan":
         from parameters.simple_gan import Model
@@ -37,8 +39,6 @@ def main(args):
         trainer = Trainer(model, lr)
         trainer.weights_init_uniform_rule(model)
 
-        time_series = False
-
     elif model_type == "nice":
         from parameters.nice import NICE
         from parameters.nice import Trainer
@@ -46,8 +46,8 @@ def main(args):
             torch.tensor(0.), torch.tensor(1.))
         coupling = 4
         len_input_output = 10
-        mid_dim = 10
-        hidden = 4
+        mid_dim = 15
+        hidden = 6
         mask_config = 1
         model = NICE(prior=noise_input,
                      coupling=coupling,
@@ -56,8 +56,6 @@ def main(args):
                      hidden=hidden,
                      mask_config=mask_config)
         trainer = Trainer(model, lr)
-
-        time_series = False
 
     elif model_type == "nice_conditional":
         from parameters.nice_conditional import NICE_CONDITIONAL
@@ -76,8 +74,6 @@ def main(args):
                                  hidden=hidden,
                                  mask_config=mask_config)
         trainer = Trainer(model, lr)
-
-        time_series = False
 
     elif model_type == "nice_ts":
         from parameters.nice_ts import NICE_TS
@@ -151,10 +147,10 @@ def main(args):
         if not time_series:
             testing_error.append(metrics.compute_error_on_test(
                 temperature_testing_set, time_testing_set, time_series))
-            error_on_train_set.append(metrics.compute_error_on_test(
+            training_error.append(metrics.compute_error_on_test(
                 training_set[0], training_set[1], time_series))
             pbar.set_description(
-                f"Error on testing set: {testing_error[-1]}, on training set: {error_on_train_set[-1]}")
+                f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}")
         
         else:
             pbar.set_description(
@@ -218,7 +214,7 @@ if __name__ == '__main__':
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
-    parser.add_argument('--model_type', default="nice_ts", type=str)
+    parser.add_argument('--model_type', default="nice", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
     parser.add_argument('--model_metrics', default="mix", type=str)
 
