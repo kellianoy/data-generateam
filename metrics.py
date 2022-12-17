@@ -52,7 +52,7 @@ class Metrics:
         # Return the linear norm of the difference (absolute error)
         return np.linalg.norm((R-R_tild), ord=1)
 
-    def compute_error_on_test(self, temperature_test, time):
+    def compute_error_on_test(self, temperature_test, time, time_series, past_infos = None,number_ts = None):
         # Compute the error on the test set using the chosen metric
         # @param temperature_test: the test set
         # @param time: the time vector
@@ -60,7 +60,10 @@ class Metrics:
 
         n_test = time.shape[0]
         time_interval = [time[0], time[-1]]
-        generated_sample = self.trainer.generate_sample(n_test, time_interval)
+        if time_series:
+            generated_sample = self.trainer.generate_sample(n_test, temperature_test[0], time, past_infos ,number_ts)
+        else:
+            generated_sample = self.trainer.generate_sample(n_test, time_interval)
         metric = None
 
         if self.mode == "ad":

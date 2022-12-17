@@ -5,7 +5,7 @@ import numpy as np
 
 if __name__ == '__main__':
 
-    model_type = "nice_conditional"
+    model_type = "nice"
 
     model_name = "model_1"
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     axs = axs.ravel()
 
     for i in range(10):
-        axs[2*i].hist(testing_set[0][:, i], bins=30)
+        axs[2*i].hist(training_set[0][:, i], bins=30)
         axs[2*i].axis(xmin=-0.5, xmax=0.5)
         axs[2*i+1].hist(generated_sample[:, i], bins=30)
         axs[2*i+1].axis(xmin=-0.5, xmax=0.5)
