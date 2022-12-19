@@ -72,13 +72,17 @@ def main(args):
         # hidden = 4
         hidden = 4
         mask_config = 1
+        mid_time_dim = 7
+        number_hidden_block_time = 10
         model = NICE_CONDITIONAL(prior=noise_input,
                                  coupling=coupling,
                                  len_input=len_input_output,
                                  mid_dim=mid_dim,
                                  hidden=hidden,
                                  mask_config=mask_config,
-                                 time_dim=13)
+                                 time_dim=13,
+                                 mid_time_dim = mid_time_dim,
+                                 number_hidden_block_time = number_hidden_block_time)
         trainer = Trainer(model, lr)
 
         time_series = False
@@ -101,7 +105,8 @@ def main(args):
                                  hidden=hidden,
                                  mask_config=mask_config,
                                  rnn_embedding_dim=rnn_embedding_dim,
-                                 len_input_rnn = len_input_output+training_set[1].shape[1])
+                                 len_input_rnn = len_input_output+training_set[1].shape[1]
+                                 )
         trainer = Trainer(model, lr)
 
         time_series = True
