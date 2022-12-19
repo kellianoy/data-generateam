@@ -1,6 +1,6 @@
 from metrics import Metrics
 import argparse
-from data.dataset_tools import generate_basic_timeseries_splitted_normalized_dataset, denormalize_temperature
+from data.dataset_tools import generate_basic_timeseries_splitted_normalized_dataset_with_month_info, denormalize_temperature
 from data.dataset_pytorch import Dataset, Timeseries_dataset
 import torch
 from torch.utils.data import DataLoader
@@ -23,7 +23,7 @@ def main(args):
     lr = args.lr
 
     # Load dataset and generat training and testing set (normalized)
-    dataset = generate_basic_timeseries_splitted_normalized_dataset(
+    dataset = generate_basic_timeseries_splitted_normalized_dataset_with_month_info(
         dataset_name, proportion_test=proportion_test)
     training_set = dataset[0][0]
     testing_set = dataset[0][1]
@@ -77,7 +77,8 @@ def main(args):
                                  len_input=len_input_output,
                                  mid_dim=mid_dim,
                                  hidden=hidden,
-                                 mask_config=mask_config)
+                                 mask_config=mask_config,
+                                 time_dim=13)
         trainer = Trainer(model, lr)
 
         time_series = False
@@ -99,28 +100,28 @@ def main(args):
                                  mid_dim=mid_dim,
                                  hidden=hidden,
                                  mask_config=mask_config,
-                                 rnn_embedding_dim=rnn_embedding_dim)
+                                 rnn_embedding_dim=rnn_embedding_dim,
+                                 len_input_rnn = len_input_output+training_set[1].shape[1])
         trainer = Trainer(model, lr)
 
         time_series = True
-        memory_size = 50
+        memory_size = args.memory_size
+        number_ts = args.number_ts
 
     else:
         raise NotImplementedError
 
-    print("ok")
+
     print("")
     print("Data preparation...")
 
     model_path = "parameters/{}/models_saved/".format(model_type)
     model_name = model_name + ".pt"
-
     # Preparating the data: dividing in training and testing sets
     temperature_training_set = torch.from_numpy(training_set[0]).float()
     time_training_set = torch.from_numpy(training_set[1]).float()
     temperature_testing_set = testing_set[0]
     time_testing_set = testing_set[1]
-    
     
     if time_series:
 
@@ -148,7 +149,7 @@ def main(args):
 
         if time_series:
             testing_error.append(metrics.compute_error_on_test(
-                temperature_testing_set, time_testing_set, time_series))
+                temperature_testing_set, time_testing_set, time_series, past_infos, number_ts = number_ts))
 
         if not time_series:
             testing_error.append(metrics.compute_error_on_test(
@@ -206,13 +207,15 @@ if __name__ == '__main__':
                         type=float, help='proportion test in dataset')
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
-    parser.add_argument('--lr', default=3e-5, type=float, help='Learning rate')
-    parser.add_argument('--num_epochs', default=250,
+    parser.add_argument('--lr', default=1e-4, type=float, help='Learning rate')
+    parser.add_argument('--num_epochs', default=150,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
     parser.add_argument('--model_type', default="nice_ts", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
     parser.add_argument('--model_loss', default="ad", type=str)
+    parser.add_argument('--memory_size', default=50, type=int)
+    parser.add_argument('--number_ts', default=1, type=int)
 
     main(parser.parse_args())

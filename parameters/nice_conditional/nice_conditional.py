@@ -8,7 +8,7 @@ import numpy as np
 """Additive coupling layer.
 """
 class Coupling(nn.Module):
-    def __init__(self, len_input, mid_dim, hidden, mask_config):
+    def __init__(self, len_input, mid_dim, hidden, hidden_time_block, mask_config, time_dim, hidden_time_dim = 5, out_time_dim = 5):
         """Initialize a coupling layer.
         Args:
             len_input: input/output dimensions.
@@ -19,8 +19,19 @@ class Coupling(nn.Module):
         super(Coupling, self).__init__()
         self.mask_config = mask_config
 
+        self.in_time_in_block = nn.Sequential(
+            nn.Linear(time_dim, hidden_time_dim),
+            )  
+            # nn.ReLU())
+        self.in_time_mid_block = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(hidden_time_dim, hidden_time_dim),
+                ) for _ in range(hidden_time_block - 1)])
+                # nn.ReLU()) for _ in range(hidden_time_block - 1)])
+        self.in_time_out_block = nn.Linear(hidden_time_dim, out_time_dim)
+
         self.in_block = nn.Sequential(
-            nn.Linear(len_input//2+1, mid_dim),
+            nn.Linear(len_input//2 + out_time_dim, mid_dim),
             nn.ReLU())
         self.mid_block = nn.ModuleList([
             nn.Sequential(
@@ -43,7 +54,13 @@ class Coupling(nn.Module):
             on, off = z[:, :, 0], z[:, :, 1]
         else:
             off, on = z[:, :, 0], z[:, :, 1]
-        off_concatenated = torch.cat((off,x.unsqueeze(1)),axis = -1)
+        
+        off_time = torch.sin(self.in_time_in_block(x))
+        for i in range(len(self.in_time_mid_block)):
+            off_time = torch.sin(self.in_time_mid_block[i](off_time))
+        off_time = self.in_time_out_block(off_time)
+        
+        off_concatenated = torch.cat((off,off_time),axis = -1)
         off_ = self.in_block(off_concatenated)
         for i in range(len(self.mid_block)):
             off_ = self.mid_block[i](off_)
@@ -87,7 +104,7 @@ class Scaling(nn.Module):
         return x, log_det_J
 
 class Conditional_prior(nn.Module):
-    def __init__(self, dim, hidden = 3):
+    def __init__(self, mid_dim, out_dim, hidden = 3,time_dim = 13):
         """Initialize a (log-)scaling layer.
         Args:
             dim: input/output dimensions.
@@ -95,22 +112,26 @@ class Conditional_prior(nn.Module):
         super(Conditional_prior, self).__init__()
 
         self.in_block_mean = nn.Sequential(
-            nn.Linear(1, dim),
-            nn.ReLU())
+            nn.Linear(time_dim, mid_dim),
+            )
+            # nn.ReLU())
         self.mid_block_mean = nn.ModuleList([
             nn.Sequential(
-                nn.Linear(dim, dim),
-                nn.ReLU()) for _ in range(hidden - 1)])
-        self.out_block_mean = nn.Linear(dim, dim)
+                nn.Linear(mid_dim, mid_dim),
+                ) for _ in range(hidden - 1)])
+                # nn.ReLU()) for _ in range(hidden - 1)])
+        self.out_block_mean = nn.Linear(mid_dim, out_dim)
 
         self.in_block_var = nn.Sequential(
-            nn.Linear(1, dim),
-            nn.ReLU())
+            nn.Linear(time_dim, mid_dim),
+            )
+            # nn.ReLU())
         self.mid_block_var = nn.ModuleList([
             nn.Sequential(
-                nn.Linear(dim, dim),
-                nn.ReLU()) for _ in range(hidden - 1)])
-        self.out_block_var = nn.Linear(dim, dim)
+                nn.Linear(mid_dim, mid_dim),
+                ) for _ in range(hidden - 1)])
+                # nn.ReLU()) for _ in range(hidden - 1)])
+        self.out_block_var = nn.Linear(mid_dim, out_dim)
 
 
 
@@ -122,17 +143,18 @@ class Conditional_prior(nn.Module):
         Returns:
             transformed tensor and log-determinant of Jacobian.
         """
-        off_ = self.in_block_mean(x.unsqueeze(1))
+        off_ = torch.sin(self.in_block_mean(x))
         for i in range(len(self.mid_block_var)):
-            off_ = self.mid_block_mean[i](off_)
+            off_ = torch.sin(self.mid_block_mean[i](off_))
         mean = self.out_block_mean(off_)
 
-        off_ = self.in_block_var(x.unsqueeze(1))
+        off_ = torch.sin(self.in_block_var(x))
         for i in range(len(self.mid_block_var)):
-            off_ = self.mid_block_var[i](off_)
+            off_ = torch.sin(self.mid_block_var[i](off_))
         var = self.out_block_var(off_)
 
-        log_det_J_p_1 = torch.log(torch.abs(torch.prod(x, 0)))
+        
+        log_det_J_p_1 = torch.log(torch.abs(1/torch.prod(var,axis = 1)))
         
         if reverse:
             return z*var + mean, log_det_J_p_1
@@ -145,7 +167,7 @@ class Conditional_prior(nn.Module):
 """
 class NICE_CONDITIONAL(nn.Module):
     def __init__(self, prior, coupling, 
-        len_input, mid_dim, hidden, mask_config):
+        len_input, mid_dim, hidden, mask_config,time_dim):
         """Initialize a NICE.
         Args:
             prior: prior distribution over latent space Z.
@@ -155,6 +177,8 @@ class NICE_CONDITIONAL(nn.Module):
             hidden: number of hidden layers.
             mask_config: 1 if transform odd units, 0 if transform even units.
         """
+        mid_time_dim = 7
+        hidden_block_time = 10
         super(NICE_CONDITIONAL, self).__init__()
         self.prior = prior
         self.len_input = len_input
@@ -162,12 +186,16 @@ class NICE_CONDITIONAL(nn.Module):
         self.coupling = nn.ModuleList([
             Coupling(len_input=len_input, 
                      mid_dim=mid_dim, 
-                     hidden=hidden, 
-                     mask_config=(mask_config+i)%2) \
+                     hidden=hidden,
+                     hidden_time_block = hidden_block_time,
+                     mask_config=(mask_config+i)%2,
+                     time_dim=time_dim,
+                     hidden_time_dim = mid_time_dim, 
+                     out_time_dim = 5) \
             for i in range(coupling)])
         self.scaling = Scaling(len_input)
 
-        self.conditional_prior = Conditional_prior(len_input,hidden=3)
+        self.conditional_prior = Conditional_prior(mid_dim = 5, out_dim = len_input, hidden=hidden_block_time, time_dim = time_dim)
 
     def g(self, z, time):
         """Transformation g: Z -> X (inverse of f).
@@ -216,7 +244,7 @@ class NICE_CONDITIONAL(nn.Module):
 
         log_ll = torch.sum(self.prior.log_prob(z), dim=1)
         # log_ll = torch.sum(log_prob_posteriori,dim = 1)
-        return log_ll + log_det_J + log_det_J
+        return log_ll + log_det_J + log_det_J_p_1
 
     def sample(self, size):
         """Generates samples.
@@ -228,13 +256,11 @@ class NICE_CONDITIONAL(nn.Module):
         z = self.prior.sample((size, self.len_input)).cuda()
         return self.g(z)
 
-    def forward(self, x):
+    def forward(self, temperature, time):
         """Forward pass.
         Args:
             x: input minibatch.
         Returns:
             log-likelihood of input.
         """
-        temperature = x[:,:-1]
-        time = x[:,-1]
         return self.log_prob(temperature, time)

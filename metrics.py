@@ -61,7 +61,7 @@ class Metrics:
         n_test = time.shape[0]
         time_interval = [time[0], time[-1]]
         if time_series:
-            generated_sample = self.trainer.generate_sample(n_test, temperature_test[0], time, past_infos ,number_ts)
+            generated_sample = self.trainer.generate_sample(n_test, temperature_test[0], time, past_infos,number_ts)
         else:
             generated_sample = self.trainer.generate_sample(n_test, time_interval)
         metric = None
