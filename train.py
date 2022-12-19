@@ -69,11 +69,10 @@ def main(args):
         coupling = 4
         len_input_output = 10
         mid_dim = 10
-        # hidden = 4
         hidden = 4
         mask_config = 1
         mid_time_dim = 7
-        number_hidden_block_time = 10
+        number_hidden_block_time = 5
         model = NICE_CONDITIONAL(prior=noise_input,
                                  coupling=coupling,
                                  len_input=len_input_output,
@@ -213,7 +212,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
     parser.add_argument('--lr', default=1e-4, type=float, help='Learning rate')
-    parser.add_argument('--num_epochs', default=150,
+    parser.add_argument('--num_epochs', default=100,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
