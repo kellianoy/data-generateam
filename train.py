@@ -67,13 +67,17 @@ def main(args):
         mid_dim = 10
         hidden = 5
         mask_config = 1
+        mid_time_dim = 7
+        number_hidden_block_time = 5
         model = NICE_CONDITIONAL(prior=noise_input,
                                  coupling=coupling,
                                  len_input=len_input_output,
                                  mid_dim=mid_dim,
                                  hidden=hidden,
                                  mask_config=mask_config,
-                                 time_dim=13)
+                                 time_dim=13,
+                                 mid_time_dim=mid_time_dim,
+                                 number_hidden_block_time=number_hidden_block_time)
         trainer = Trainer(model, lr)
 
     elif model_type == "nice_ts":
@@ -94,7 +98,8 @@ def main(args):
                         hidden=hidden,
                         mask_config=mask_config,
                         rnn_embedding_dim=rnn_embedding_dim,
-                        len_input_rnn=len_input_output+training_set[1].shape[1])
+                        len_input_rnn=len_input_output+training_set[1].shape[1]
+                        )
         trainer = Trainer(model, lr)
 
         time_series = True
@@ -208,8 +213,8 @@ if __name__ == '__main__':
                         type=float, help='proportion test in dataset')
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
-    parser.add_argument('--lr', default=5e-3, type=float, help='Learning rate')
-    parser.add_argument('--num_epochs', default=256,
+    parser.add_argument('--lr', default=1e-4, type=float, help='Learning rate')
+    parser.add_argument('--num_epochs', default=100,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')

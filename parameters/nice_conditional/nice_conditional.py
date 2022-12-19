@@ -167,7 +167,7 @@ class Conditional_prior(nn.Module):
 """
 class NICE_CONDITIONAL(nn.Module):
     def __init__(self, prior, coupling, 
-        len_input, mid_dim, hidden, mask_config,time_dim):
+        len_input, mid_dim, hidden, mask_config,time_dim, mid_time_dim, number_hidden_block_time):
         """Initialize a NICE.
         Args:
             prior: prior distribution over latent space Z.
@@ -177,8 +177,6 @@ class NICE_CONDITIONAL(nn.Module):
             hidden: number of hidden layers.
             mask_config: 1 if transform odd units, 0 if transform even units.
         """
-        mid_time_dim = 7
-        hidden_block_time = 10
         super(NICE_CONDITIONAL, self).__init__()
         self.prior = prior
         self.len_input = len_input
@@ -187,7 +185,7 @@ class NICE_CONDITIONAL(nn.Module):
             Coupling(len_input=len_input, 
                      mid_dim=mid_dim, 
                      hidden=hidden,
-                     hidden_time_block = hidden_block_time,
+                     hidden_time_block = number_hidden_block_time,
                      mask_config=(mask_config+i)%2,
                      time_dim=time_dim,
                      hidden_time_dim = mid_time_dim, 
@@ -195,7 +193,7 @@ class NICE_CONDITIONAL(nn.Module):
             for i in range(coupling)])
         self.scaling = Scaling(len_input)
 
-        self.conditional_prior = Conditional_prior(mid_dim = 5, out_dim = len_input, hidden=hidden_block_time, time_dim = time_dim)
+        self.conditional_prior = Conditional_prior(mid_dim = 5, out_dim = len_input, hidden=number_hidden_block_time, time_dim = time_dim)
 
     def g(self, z, time):
         """Transformation g: Z -> X (inverse of f).
