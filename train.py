@@ -1,7 +1,7 @@
 from metrics import Metrics
 import argparse
 from data.dataset_tools import generate_basic_timeseries_splitted_normalized_dataset, denormalize_temperature
-from data.dataset_pytorch import Dataset
+from data.dataset_pytorch import Dataset, Timeseries_dataset
 import torch
 from torch.utils.data import DataLoader
 from tqdm import trange
@@ -27,8 +27,8 @@ def main(args):
         dataset_name, proportion_test=proportion_test)
     training_set = dataset[0][0]
     testing_set = dataset[0][1]
-    validation_set = generate_basic_timeseries_splitted_normalized_dataset(
-        dataset_name, proportion_test=1)[0][0]
+
+    time_series = False
 
     # Selecting the model
     if model_type == "simple_gan":
@@ -46,8 +46,8 @@ def main(args):
             torch.tensor(0.), torch.tensor(1.))
         coupling = 4
         len_input_output = 10
-        mid_dim = 10
-        hidden = 4
+        mid_dim = 13
+        hidden = 5
         mask_config = 1
         model = NICE(prior=noise_input,
                      coupling=coupling,
@@ -60,10 +60,9 @@ def main(args):
     elif model_type == "nice_conditional":
         from parameters.nice_conditional import NICE_CONDITIONAL
         from parameters.nice_conditional import Trainer
-        sigma = 0.1
         noise_input = torch.distributions.Normal(
             torch.tensor(0.), torch.tensor(1.))
-        coupling = 4
+        coupling = 5
         len_input_output = 10
         mid_dim = 10
         hidden = 4
@@ -75,6 +74,29 @@ def main(args):
                                  hidden=hidden,
                                  mask_config=mask_config)
         trainer = Trainer(model, lr)
+
+    elif model_type == "nice_ts":
+        from parameters.nice_ts import NICE_TS
+        from parameters.nice_ts import Trainer
+        noise_input = torch.distributions.Normal(
+            torch.tensor(0.), torch.tensor(1.))
+        coupling = 4
+        len_input_output = 10
+        mid_dim = 8
+        hidden = 4
+        mask_config = 1
+        rnn_embedding_dim = 10
+        model = NICE_TS(prior=noise_input,
+                        coupling=coupling,
+                        len_input=len_input_output,
+                        mid_dim=mid_dim,
+                        hidden=hidden,
+                        mask_config=mask_config,
+                        rnn_embedding_dim=rnn_embedding_dim)
+        trainer = Trainer(model, lr)
+
+        time_series = True
+        memory_size = 50
 
     else:
         raise NotImplementedError
@@ -89,6 +111,14 @@ def main(args):
     # Setting the training parameters with both the data and the time series
     torch_training = Dataset(torch.from_numpy(
         training_set[0]).float(), torch.from_numpy(training_set[1]).float())
+
+    if time_series:
+        past_infos = (torch.tensor(training_set[0][-memory_size:], dtype=torch.float32),
+                      torch.tensor(training_set[1][-memory_size:], dtype=torch.float32))
+        torch_training = Timeseries_dataset(
+            temperature_training_set, time_training_set, memory_size=memory_size)
+    else:
+        torch_training = Dataset(temperature_training_set, time_training_set)
 
     train_loader = DataLoader(torch_training, batch_size=batch_size,
                               shuffle=True, num_workers=0)
@@ -108,18 +138,21 @@ def main(args):
         for temperature, time in train_loader:
             trainer.training_iteration(temperature, time)
 
-        testing_error.append(metrics.compute_error_on_test(
-            testing_set[0], testing_set[1]))
-        training_error.append(metrics.compute_error_on_test(
-            training_set[0], training_set[1]))
-        # validation_error.append(metrics.compute_error_on_test(
-        #     validation_set[0], validation_set[1]))
+        if time_series:
+            testing_error.append(metrics.compute_error_on_test(
+                temperature_testing_set, time_testing_set, time_series, past_infos, memory_size))
+            pbar.set_description(
+                f"Error on testing set: {testing_error[-1]}")
+        else:
+            testing_error.append(metrics.compute_error_on_test(
+                temperature_testing_set, time_testing_set, time_series))
+            training_error.append(metrics.compute_error_on_test(
+                training_set[0], training_set[1], time_series))
+            pbar.set_description(
+                f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}")
 
         model_trained.append(copy.deepcopy(trainer.model_to_save()))
-        # pbar.set_description(
-        #     f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}, on validation set: {validation_error[-1]}")
-        pbar.set_description(
-            f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}")
+
     # Collecting the best model
     testing_error = np.array(testing_error)
     best_metrics = np.min(testing_error)
@@ -146,10 +179,17 @@ def main(args):
     # Plotting the error
     plt.plot(training_error)
     plt.plot(testing_error)
-    plt.plot(validation_error)
-    mode = "Kendall" if model_metrics=="ke" else "Anderson Darling"
-    plt.legend([f"{mode} Error on training set", f"{mode} Error on testing set",
-               f"{mode} Error on validation set"])
+
+    mode = ""
+    if model_metrics == "ad":
+        mode = "Anderson Darling"
+    elif model_metrics == "ke":
+        mode = "Absolute Kendall"
+    else:
+        mode = "Mix AD/KE"
+
+    plt.legend([f"{mode} Error on training set",
+               f"{mode} Error on testing set"])
     plt.show()
 
 
@@ -163,13 +203,13 @@ if __name__ == '__main__':
                         type=float, help='proportion test in dataset')
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
-    parser.add_argument('--lr', default=1e-3, type=float, help='Learning rate')
-    parser.add_argument('--num_epochs', default=250,
+    parser.add_argument('--lr', default=5e-4, type=float, help='Learning rate')
+    parser.add_argument('--num_epochs', default=128,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
-    parser.add_argument('--model_type', default="nice", type=str)
+    parser.add_argument('--model_type', default="nice_ts", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
-    parser.add_argument('--model_metrics', default="ke", type=str)
+    parser.add_argument('--model_metrics', default="mix", type=str)
 
     main(parser.parse_args())

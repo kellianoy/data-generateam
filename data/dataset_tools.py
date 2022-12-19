@@ -32,6 +32,8 @@ def dt64_to_float(dt64):
     return dt_float
 
 
+
+
 def extract_dataframe(name):
 
     folder = "./data/{}.csv".format(name)
@@ -102,6 +104,8 @@ def generate_basic_timeseries_splitted_normalized_dataset(name, proportion_test=
 
     temperature, time_float, time_dt64 = extract_dataset_array(name)
     temperature, max, min = normalize_temperature(temperature)
+    
+    time_float = np.expand_dims( time_float, axis = 1) 
 
     if rescale:
         time_float = rescale_time(time_float)

@@ -56,7 +56,7 @@ class Metrics:
         # @param real_samples: the real sample
         return ake(generated_samples, real_samples)
 
-    def compute_error_on_test(self, temperature, time):
+    def compute_error_on_test(self, temperature, time, time_series, past_infos = None,number_ts = None):
         # Compute the error on the test set using the chosen metric
         # @param temperature: the test set
         # @param time: the time vector
@@ -64,16 +64,22 @@ class Metrics:
 
         n_test = time.shape[0]
         time_interval = [time[0], time[-1]]
-        generated_sample = self.trainer.generate_sample(n_test, time_interval)
+        if time_series:
+            generated_samples = self.trainer.generate_sample(n_test, temperature[0], time, past_infos, number_ts)
+        else:
+            generated_samples = self.trainer.generate_sample(n_test, time_interval)
         metric = None
 
         if self.mode == "ad":
             metric = self.anderson_darling(
-                generated_sample, temperature)
+                generated_samples, temperature)
 
         elif self.mode == "ke":
             metric = self.absolute_kendall_error(
-                generated_sample, temperature)
+                generated_samples, temperature)
+        
+        elif self.mode == "mix":
+            metric = 0.5 * self.anderson_darling(generated_samples, temperature) + 0.5 * self.absolute_kendall_error(generated_samples, temperature)
 
         else:
             raise NotImplementedError

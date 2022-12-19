@@ -10,16 +10,15 @@ class Trainer():
 
     def training_iteration(self, temperature, time):
         self.optimizer.zero_grad()
-        input = torch.cat([temperature,time.unsqueeze(1)],axis = -1)
+        input = torch.cat([temperature,time],axis = -1)
         loss = -self.model(input).mean()
         loss.backward()
-        # print(loss)
         self.optimizer.step()
         return loss
 
     def generate_sample(self, n_sample, time_interval):
         noise = torch.empty(( n_sample, self.model.len_input)).normal_(mean=0,std=1)
-        time = torch.FloatTensor(n_sample).uniform_(time_interval[0], time_interval[1])
+        time = torch.FloatTensor(n_sample).uniform_(time_interval[0][0], time_interval[1][0])
 
         # noise = torch.empty(( n_sample, self.model.len_input))
         # for i in range(n_sample):
