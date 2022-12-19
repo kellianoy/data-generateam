@@ -44,7 +44,7 @@ class Metrics:
 
     # Method to compute anderson darling error
     def anderson_darling(self, generated_sample, real_sample):
-        """Anderson Darlign Error."""
+        """Anderson Darling Error."""
         # Compute the anderson darling error
         # @param generated_sample: the generated sample
         # @param real_sample: the real sample

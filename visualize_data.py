@@ -7,7 +7,7 @@ from metrics import Metrics
 if __name__ == "__main__":
 
     model_type = "nice_conditional"
-    model_name = "nc_optimal"
+    model_name = "7-10-5"
 
     if model_type == "simple_gan":
         from parameters.simple_gan import Model
@@ -72,9 +72,6 @@ if __name__ == "__main__":
     n_test = 10000
 
     generated_sample = trainer.generate_sample(n_test, time_interval)
-
-    testing_distribution = generate_basic_timeseries_splitted_normalized_dataset(
-        "df_train", proportion_test=0.8)[0][1]
 
     fig, axs = plt.subplots(nrows=10, ncols=2, figsize=(10, 30))
     fig.subplots_adjust(hspace=.5, wspace=0.5)

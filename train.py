@@ -65,7 +65,7 @@ def main(args):
         len_input_output = 10
         coupling = 6
         mid_dim = 10
-        hidden = 4
+        hidden = 5
         mask_config = 1
         model = NICE_CONDITIONAL(prior=noise_input,
                                  coupling=coupling,
@@ -83,7 +83,7 @@ def main(args):
             torch.tensor(0.), torch.tensor(1.))
         coupling = 4
         len_input_output = 10
-        mid_dim = 8
+        mid_dim = 10
         hidden = 4
         mask_config = 1
         rnn_embedding_dim = 10
@@ -164,6 +164,8 @@ def main(args):
     print("")
     print("End of the training phase, minimum error reached : L = {} at epoch {}".format(
         best_metrics, optimal_epoch))
+    print("Parameters of the model : coupling={}, mid_dim={}, hidden={}".format(
+        coupling, mid_dim, hidden))
     print("")
 
     # Saving the model
@@ -202,17 +204,17 @@ if __name__ == '__main__':
 
     parser.add_argument('--dataset_name', "--string",
                         default="df_train", type=str)
-    parser.add_argument('--proportion_test', default=0.8,
+    parser.add_argument('--proportion_test', default=0.85,
                         type=float, help='proportion test in dataset')
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
-    parser.add_argument('--lr', default=1e-4, type=float, help='Learning rate')
+    parser.add_argument('--lr', default=5e-3, type=float, help='Learning rate')
     parser.add_argument('--num_epochs', default=256,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
     parser.add_argument('--model_type', default="nice_conditional", type=str)
-    parser.add_argument('--model_name', default="nc_optimal", type=str)
+    parser.add_argument('--model_name', default="6-10-5-highlr", type=str)
     parser.add_argument('--model_metrics', default="mix", type=str)
     parser.add_argument('--memory_size', default=50, type=int)
     parser.add_argument('--number_ts', default=1, type=int)
