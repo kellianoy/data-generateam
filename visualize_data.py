@@ -23,8 +23,8 @@ if __name__ == "__main__":
 
         coupling = 4
         len_input_output = 10
-        mid_dim = 10
-        hidden = 4
+        mid_dim = 13
+        hidden = 5
         mask_config = 1.
 
         model = NICE(prior=noise_input,
@@ -35,7 +35,8 @@ if __name__ == "__main__":
                      mask_config=mask_config)
         trainer = Trainer(model)
 
-    model_path = "parameters/{}/models_saved/{}.pt".format(model_type, model_name)
+    model_path = "parameters/{}/models_saved/{}.pt".format(
+        model_type, model_name)
     dataset = generate_basic_timeseries_splitted_normalized_dataset(
         "df_train", proportion_test=1.)
     training_set = dataset[0][0]
@@ -53,7 +54,7 @@ if __name__ == "__main__":
 
     fig, axs = plt.subplots(nrows=10, ncols=2, figsize=(10, 30))
     fig.subplots_adjust(hspace=.5, wspace=0.5)
-    
+
     axs = axs.ravel()
 
     for i in range(10):

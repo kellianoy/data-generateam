@@ -46,8 +46,8 @@ def main(args):
             torch.tensor(0.), torch.tensor(1.))
         coupling = 4
         len_input_output = 10
-        mid_dim = 15
-        hidden = 6
+        mid_dim = 13
+        hidden = 5
         mask_config = 1
         model = NICE(prior=noise_input,
                      coupling=coupling,
@@ -62,7 +62,7 @@ def main(args):
         from parameters.nice_conditional import Trainer
         noise_input = torch.distributions.Normal(
             torch.tensor(0.), torch.tensor(1.))
-        coupling = 4
+        coupling = 5
         len_input_output = 10
         mid_dim = 10
         hidden = 4
@@ -82,17 +82,17 @@ def main(args):
             torch.tensor(0.), torch.tensor(1.))
         coupling = 4
         len_input_output = 10
-        mid_dim = 10
+        mid_dim = 8
         hidden = 4
         mask_config = 1
         rnn_embedding_dim = 10
         model = NICE_TS(prior=noise_input,
-                                 coupling=coupling,
-                                 len_input=len_input_output,
-                                 mid_dim=mid_dim,
-                                 hidden=hidden,
-                                 mask_config=mask_config,
-                                 rnn_embedding_dim=rnn_embedding_dim)
+                        coupling=coupling,
+                        len_input=len_input_output,
+                        mid_dim=mid_dim,
+                        hidden=hidden,
+                        mask_config=mask_config,
+                        rnn_embedding_dim=rnn_embedding_dim)
         trainer = Trainer(model, lr)
 
         time_series = True
@@ -113,12 +113,12 @@ def main(args):
     time_training_set = torch.from_numpy(training_set[1]).float()
     temperature_testing_set = testing_set[0]
     time_testing_set = testing_set[1]
-    
-    
-    if time_series:
 
-        past_infos = (torch.tensor(training_set[0][-memory_size:], dtype=torch.float32), torch.tensor(training_set[1][-memory_size:], dtype=torch.float32))
-        torch_training = Timeseries_dataset(temperature_training_set, time_training_set, memory_size=memory_size)
+    if time_series:
+        past_infos = (torch.tensor(training_set[0][-memory_size:], dtype=torch.float32),
+                      torch.tensor(training_set[1][-memory_size:], dtype=torch.float32))
+        torch_training = Timeseries_dataset(
+            temperature_training_set, time_training_set, memory_size=memory_size)
     else:
         torch_training = Dataset(temperature_training_set, time_training_set)
 
@@ -142,23 +142,18 @@ def main(args):
 
         if time_series:
             testing_error.append(metrics.compute_error_on_test(
-                temperature_testing_set, time_testing_set, time_series))
-
-        if not time_series:
+                temperature_testing_set, time_testing_set, time_series, past_infos, memory_size))
+            pbar.set_description(
+                f"Error on testing set: {testing_error[-1]}")
+        else:
             testing_error.append(metrics.compute_error_on_test(
                 temperature_testing_set, time_testing_set, time_series))
             training_error.append(metrics.compute_error_on_test(
                 training_set[0], training_set[1], time_series))
             pbar.set_description(
                 f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}")
-        
-        else:
-            pbar.set_description(
-                f"Error on testing set: {testing_error[-1]}")
-            
 
         model_trained.append(copy.deepcopy(trainer.model_to_save()))
-
 
     # Collecting the best model
     testing_error = np.array(testing_error)
@@ -186,7 +181,7 @@ def main(args):
     # Plotting the error
     plt.plot(training_error)
     plt.plot(testing_error)
-    
+
     mode = ""
     if model_metrics == "ad":
         mode = "Anderson Darling"
@@ -194,8 +189,9 @@ def main(args):
         mode = "Absolute Kendall"
     else:
         mode = "Mix AD/KE"
-    
-    plt.legend([f"{mode} Error on training set", f"{mode} Error on testing set"])
+
+    plt.legend([f"{mode} Error on training set",
+               f"{mode} Error on testing set"])
     plt.show()
 
 
@@ -209,12 +205,12 @@ if __name__ == '__main__':
                         type=float, help='proportion test in dataset')
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
-    parser.add_argument('--lr', default=1e-3, type=float, help='Learning rate')
-    parser.add_argument('--num_epochs', default=256,
+    parser.add_argument('--lr', default=5e-4, type=float, help='Learning rate')
+    parser.add_argument('--num_epochs', default=128,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
-    parser.add_argument('--model_type', default="nice", type=str)
+    parser.add_argument('--model_type', default="nice_ts", type=str)
     parser.add_argument('--model_name', default="model_1", type=str)
     parser.add_argument('--model_metrics', default="mix", type=str)
 
