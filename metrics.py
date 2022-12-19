@@ -4,6 +4,8 @@ import numpy as np
 from numba import njit
 
 # Redefining np.all(x, axis=1) for numba
+
+
 @njit(cache=True)
 def np_all_axis1(x):
     """Numba compatible version of np.all(x, axis=1)."""
@@ -12,8 +14,10 @@ def np_all_axis1(x):
         out = np.logical_and(out, x[:, i])
     return out
 
+
 @njit(cache=True)
 def ake(generated_samples, real_samples):
+    """Absolute Kendall error."""
     # Compute the kendall's dependance function
     # @param generated_samples: the generated sample
     # @param real_samples: the real sample
@@ -25,8 +29,9 @@ def ake(generated_samples, real_samples):
         R_i[j] = np_all_axis1(real_samples[j] < real_samples)
         R_i_tild[j] = np_all_axis1(generated_samples[j] < generated_samples)
     R = np.sort(1/(n_test-1) * np.sum(R_i, axis=0))
-    R_tild = np.sort(1/(n_test-1)* np.sum(R_i_tild, axis=0))
+    R_tild = np.sort(1/(n_test-1) * np.sum(R_i_tild, axis=0))
     return np.linalg.norm((R-R_tild), ord=1)
+
 
 class Metrics:
     # Class constructor
@@ -39,6 +44,7 @@ class Metrics:
 
     # Method to compute anderson darling error
     def anderson_darling(self, generated_sample, real_sample):
+        """Anderson Darlign Error."""
         # Compute the anderson darling error
         # @param generated_sample: the generated sample
         # @param real_sample: the real sample
@@ -56,7 +62,7 @@ class Metrics:
         # @param real_samples: the real sample
         return ake(generated_samples, real_samples)
 
-    def compute_error_on_test(self, temperature, time, time_series, past_infos = None,number_ts = None):
+    def compute_error_on_test(self, temperature, time, time_series, past_infos=None, number_ts=None):
         # Compute the error on the test set using the chosen metric
         # @param temperature: the test set
         # @param time: the time vector
@@ -65,9 +71,11 @@ class Metrics:
         n_test = time.shape[0]
         time_interval = [time[0], time[-1]]
         if time_series:
-            generated_samples = self.trainer.generate_sample(n_test, temperature[0], time, past_infos, number_ts)
+            generated_sample = self.trainer.generate_sample(
+                n_test, temperature_test[0], time, past_infos, number_ts)
         else:
-            generated_samples = self.trainer.generate_sample(n_test, time_interval)
+            generated_samples = self.trainer.generate_sample(
+                n_test, time_interval)
         metric = None
 
         if self.mode == "ad":
@@ -77,9 +85,11 @@ class Metrics:
         elif self.mode == "ke":
             metric = self.absolute_kendall_error(
                 generated_samples, temperature)
-        
+
         elif self.mode == "mix":
-            metric = 0.5 * self.anderson_darling(generated_samples, temperature) + 0.5 * self.absolute_kendall_error(generated_samples, temperature)
+            metric = 0.5 * self.anderson_darling(generated_samples, temperature) + \
+                0.5 * \
+                self.absolute_kendall_error(generated_samples, temperature)
 
         else:
             raise NotImplementedError

@@ -7,7 +7,7 @@ import torch.nn as nn
 """Additive coupling layer.
 """
 class Coupling(nn.Module):
-    def __init__(self, len_input, mid_dim, hidden, mask_config, len_rnn_embedding_input):
+    def __init__(self, len_input, mid_dim, hidden, mask_config,len_rnn_embedding_input):
         """Initialize a coupling layer.
         Args:
             len_input: input/output dimensions.
@@ -92,11 +92,13 @@ class RNN(nn.Module):
         super(RNN, self).__init__()
         self.lstm = nn.LSTM(input_size, embedding_dim, batch_first=True, bidirectional=False)
 
-    def froward_with_hidden(self, x, hidden):
+    def froward_with_hidden(self, x, time, hidden):
+        x = torch.cat((x,time),axis = -1)
         out, hidden = self.lstm(x, hidden)
         return out, hidden
 
-    def forward(self, x):
+    def forward(self, x, time):
+        x = torch.cat((x,time),axis = -1)
         out, _ = self.lstm(x)
         rnn_embedding = torch.squeeze(out[:,-1,:])
         return rnn_embedding
@@ -106,7 +108,7 @@ class RNN(nn.Module):
 """
 class NICE_TS(nn.Module):
     def __init__(self, prior, coupling, 
-        len_input, mid_dim, hidden, mask_config, rnn_embedding_dim):
+        len_input, mid_dim, hidden, mask_config, rnn_embedding_dim, len_input_rnn):
         """Initialize a NICE.
         Args:
             prior: prior distribution over latent space Z.
@@ -130,7 +132,7 @@ class NICE_TS(nn.Module):
         self.scaling = Scaling(len_input)
 
         ####Complete later
-        self.rnn = RNN(input_size = len_input + 1, 
+        self.rnn = RNN(input_size = len_input_rnn, 
                        embedding_dim = rnn_embedding_dim)
         self.embedding_dim = rnn_embedding_dim
         ######
@@ -143,8 +145,9 @@ class NICE_TS(nn.Module):
             transformed tensor in data space X.
         """
 
-        input_rnn = torch.cat((temperature,t), dim = -1)
-        rnn_embedding = self.rnn(input_rnn)
+        rnn_embedding = self.rnn(temperature,t)
+        if rnn_embedding.dim() == 1:
+            rnn_embedding = rnn_embedding.unsqueeze(0)
 
         x, _ = self.scaling(z, reverse=True)
         for i in reversed(range(len(self.coupling))):
@@ -159,9 +162,8 @@ class NICE_TS(nn.Module):
             transformed tensor in latent space Z.
         """
         input_NVP = torch.squeeze(x[:,-1,:])
-        input_rnn = torch.cat((x,t), dim = -1)
 
-        rnn_embedding = self.rnn(input_rnn)
+        rnn_embedding = self.rnn(x, t)
 
         for i in range(len(self.coupling)):
             input_NVP = self.coupling[i](input_NVP, rnn_embedding)

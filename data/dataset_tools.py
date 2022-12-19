@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import torch
 
 
 def dt64_to_float(dt64):
@@ -32,6 +33,24 @@ def dt64_to_float(dt64):
     return dt_float
 
 
+def get_month(dt64):
+    month = np.array([dt64[i].astype('datetime64[M]').astype(
+        int) % 12 for i in range(len(dt64))])
+
+    month_indexed = np.zeros((month.shape[0], 12)).astype(float)
+    for i in range(month.shape[0]):
+        month_indexed[i, month[i]] = 1
+
+    return month_indexed
+
+
+def get_month_from_scaled_float(float, initial_time=1981.6657534246576, final_time=2017):
+    if not torch.is_tensor(float):
+        raise NotImplementedError
+    float = float*(final_time - initial_time) + final_time
+    month = float - float.type(torch.IntTensor)
+    month = (month * 12).type(torch.IntTensor)
+    return month
 
 
 def extract_dataframe(name):
@@ -87,7 +106,8 @@ def timeseries_split_dataset(temperature, time_float, time_dt64=None, proportion
 
 
 def rescale_time(time, initial_time=1981.6657534246576, final_time=2017):
-    return (time - initial_time)/(final_time - initial_time)
+    time[:, 0] = (time[:, 0] - initial_time)/(final_time - initial_time)
+    return time
 
 
 def normalize_temperature(temperature):
@@ -104,8 +124,23 @@ def generate_basic_timeseries_splitted_normalized_dataset(name, proportion_test=
 
     temperature, time_float, time_dt64 = extract_dataset_array(name)
     temperature, max, min = normalize_temperature(temperature)
-    
-    time_float = np.expand_dims( time_float, axis = 1) 
+
+    time_float = np.expand_dims(time_float, axis=1)
+
+    if rescale:
+        time_float = rescale_time(time_float)
+
+    return timeseries_split_dataset(temperature, time_float, time_dt64=time_dt64, proportion_test=proportion_test, proportion_train=1 - proportion_test), max, min
+
+
+def generate_basic_timeseries_splitted_normalized_dataset_with_month_info(name, proportion_test=0.8, rescale=True):
+
+    temperature, time_float, time_dt64 = extract_dataset_array(name)
+    time_month = get_month(time_dt64)
+    time_float = np.concatenate(
+        (np.expand_dims(time_float, axis=1), time_month), axis=1)
+
+    temperature, max, min = normalize_temperature(temperature)
 
     if rescale:
         time_float = rescale_time(time_float)
