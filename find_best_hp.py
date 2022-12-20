@@ -63,7 +63,7 @@ def main(args):
     mean = np.zeros(N_hp)
     std = np.zeros(N_hp)
 
-    n_of_model = range(0, 10)
+    n_of_model = range(0, 5)
     #####################
     # Training loop
     for i in windows_hp:
@@ -95,7 +95,7 @@ def main(args):
             testing_error = []
             metrics = Metrics(trainer, model_metrics)
 
-            for epoch in range(num_epochs):
+            for epoch in (pbar := trange(num_epochs)):
                 for temperature, time in train_loader:
                     trainer.training_iteration(temperature, time)
 
