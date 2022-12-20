@@ -101,9 +101,9 @@ def main(args):
 
                 testing_error.append(metrics.compute_error_on_test(
                     temperature_testing_set, time_testing_set, time_series))
-
         mean[i] = np.mean(np.array(testing_error))
         std[i] = np.std(np.array(testing_error))
+        print("hp: ", i, ", mean: ", mean[i], ", std: ", std[i])
 
     print("min is :", np.min(mean),
           'and better hyper parameter: ', np.argmin(mean))
