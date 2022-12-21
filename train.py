@@ -64,11 +64,11 @@ def main(args):
             torch.tensor(0.), torch.tensor(1.))
         len_input_output = 10
         coupling = 6
-        mid_dim = 10
-        hidden = 5
+        mid_dim = 15
+        hidden = 4
         mask_config = 1
-        mid_time_dim = 7
-        number_hidden_block_time = 5
+        mid_time_dim = 9
+        number_hidden_block_time = 9
         model = NICE_CONDITIONAL(prior=noise_input,
                                  coupling=coupling,
                                  len_input=len_input_output,
@@ -154,10 +154,12 @@ def main(args):
         else:
             testing_error.append(metrics.compute_error_on_test(
                 temperature_testing_set, time_testing_set, time_series))
-            training_error.append(metrics.compute_error_on_test(
-                training_set[0], training_set[1], time_series))
+            # training_error.append(metrics.compute_error_on_test(
+            #     training_set[0], training_set[1], time_series))
             pbar.set_description(
-                f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}")
+                f"Error on testing set: {testing_error[-1]}")
+            # pbar.set_description(
+            #     f"Error on testing set: {testing_error[-1]}, on training set: {training_error[-1]}")
 
         model_trained.append(copy.deepcopy(trainer.model_to_save()))
 
@@ -214,12 +216,12 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=64,
                         type=int, help='Batch size')
     parser.add_argument('--lr', default=1e-4, type=float, help='Learning rate')
-    parser.add_argument('--num_epochs', default=100,
+    parser.add_argument('--num_epochs', default=256,
                         type=int, help='Number of epochs to train')
     parser.add_argument('--resume', '-r', action='store_true',
                         help='Resume from checkpoint')
     parser.add_argument('--model_type', default="nice_conditional", type=str)
-    parser.add_argument('--model_name', default="6-10-5-highlr", type=str)
+    parser.add_argument('--model_name', default="6-15-9-4-9", type=str)
     parser.add_argument('--model_metrics', default="mix", type=str)
     parser.add_argument('--memory_size', default=50, type=int)
     parser.add_argument('--number_ts', default=1, type=int)
