@@ -1,13 +1,12 @@
 import matplotlib.pyplot as plt
-from data.dataset_tools import generate_basic_timeseries_splitted_normalized_dataset_with_month_info
+from parameters.dataset.dataset_tools import generate_basic_timeseries_splitted_normalized_dataset_with_month_info
 import torch
 import numpy as np
-from metrics import Metrics
 
 if __name__ == "__main__":
 
     model_type = "nice_conditional"
-    model_name = "6-15-9-4-9"
+    model_name = "optimal_model"
 
     if model_type == "simple_gan":
         from parameters.simple_gan import Model
@@ -42,7 +41,7 @@ if __name__ == "__main__":
             torch.tensor(0.), torch.tensor(1.))
         len_input_output = 10
         coupling = 6
-        mid_dim = 15
+        mid_dim = 16
         hidden = 4
         mask_config = 1
         mid_time_dim = 9
@@ -61,7 +60,7 @@ if __name__ == "__main__":
     model_path = "parameters/{}/models_saved/{}.pt".format(
         model_type, model_name)
     dataset = generate_basic_timeseries_splitted_normalized_dataset_with_month_info(
-        "df_train", proportion_test=0.8)
+        "df_train", proportion_test=0.85)
     training_set = dataset[0][0]
     testing_set = dataset[0][1]
     max_temperature = dataset[1]
@@ -71,7 +70,7 @@ if __name__ == "__main__":
     time = training_set[1]
     time_interval = [time[0], time[-1]]
 
-    n_test = 10000
+    n_test = testing_set[0].shape[0]
 
     generated_sample = trainer.generate_sample(n_test, time_interval)
 
