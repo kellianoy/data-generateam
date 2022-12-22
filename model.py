@@ -32,6 +32,7 @@ def generative_model(noise):
     """
     # Forcing the type of the noise to float32 to avoid errors with torch
     noise = noise.astype('float32')
+
     # Setting the number of samples & the number of dimensions of the noise
     n_samples = noise.shape[0]
     len_dim = 10
@@ -49,8 +50,8 @@ def generative_model(noise):
         start_time - time_period[0]) / (time_period[1] - time_period[0])
 
     # Time vector (linear space of the time period we're trying to predict)
-    time_vector = torch.from_numpy(
-        np.linspace(normalized_start_time, 1, n_samples))
+    time_vector = torch.FloatTensor(
+        n_samples).uniform_(normalized_start_time, 1)
 
     # Get the months from the time vector
     month = get_month_from_scaled_float(time_vector)
