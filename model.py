@@ -62,7 +62,7 @@ def generative_model(noise):
     # One hot encoding of months
     time[:, 0] = time_vector
     for i in range(n_samples):
-        time[i, month[i]] = 1
+        time[i, month[i]+1] = 1
 
     # Generate a noise input for the model with a normal distribution
     noise_input = torch.distributions.Normal(
@@ -72,7 +72,7 @@ def generative_model(noise):
     model = NICE_CONDITIONAL(prior=noise_input,
                              coupling=6,
                              len_input=len_dim,
-                             mid_dim=15,
+                             mid_dim=16,
                              hidden=4,
                              mask_config=1,
                              time_dim=13,

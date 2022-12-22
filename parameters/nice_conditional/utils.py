@@ -28,7 +28,7 @@ class Trainer():
             (n_sample, time_interval[0].shape[0]), dtype=torch.float32)
         time[:, 0] = time_y
         for i in range(n_sample):
-            time[i, month[i]] = 1
+            time[i, month[i]+1] = 1
         with torch.no_grad():
             return self.model.g(noise, time).cpu().detach().numpy()
 

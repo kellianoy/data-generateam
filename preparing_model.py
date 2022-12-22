@@ -4,12 +4,15 @@ import torch
 from parameters.nice_conditional import NICE_CONDITIONAL
 from parameters.nice_conditional.utils import Trainer
 from parameters.dataset.dataset_tools import get_month_from_scaled_float
+import matplotlib.pyplot as plt
 
 # <!> DO NOT ADD ANY OTHER ARGUMENTS <!>
 
 # fill with uniform noise
-noise = np.random.uniform(-1/2, 1/2, (3288, 20))
+noise = np.random.normal(0, 1, (10, 10))
+# Forcing the type of the noise to float32 to avoid errors with torch
 noise = noise.astype('float32')
+
 # Setting the number of samples & the number of dimensions of the noise
 n_samples = noise.shape[0]
 len_dim = 10
@@ -27,8 +30,8 @@ normalized_start_time = (
     start_time - time_period[0]) / (time_period[1] - time_period[0])
 
 # Time vector (linear space of the time period we're trying to predict)
-time_vector = torch.from_numpy(
-    np.linspace(normalized_start_time, 1, n_samples))
+time_vector = torch.FloatTensor(
+    n_samples).uniform_(normalized_start_time, 1)
 
 # Get the months from the time vector
 month = get_month_from_scaled_float(time_vector)
@@ -39,7 +42,7 @@ time = torch.zeros((n_samples, 13), dtype=torch.float32)
 # One hot encoding of months
 time[:, 0] = time_vector
 for i in range(n_samples):
-    time[i, month[i]] = 1
+    time[i, month[i]+1] = 1
 
 # Generate a noise input for the model with a normal distribution
 noise_input = torch.distributions.Normal(
@@ -49,7 +52,7 @@ noise_input = torch.distributions.Normal(
 model = NICE_CONDITIONAL(prior=noise_input,
                          coupling=6,
                          len_input=len_dim,
-                         mid_dim=15,
+                         mid_dim=16,
                          hidden=4,
                          mask_config=1,
                          time_dim=13,
@@ -75,5 +78,6 @@ maximum = 6.703166484832764
 
 output = (maximum - minimum) * (output + 1/2) + minimum
 
-torch.set_printoptions(threshold=10_000)
-print(month)
+print(output)
+plt.hist(time_vector, range=(0, n_samples), bins=1)
+plt.plot()
